@@ -131,6 +131,16 @@ $ mv kubernetes-starter ./kubernetes-sh
 ## 
 /usr/local/src/kubernetes/kubernetes-sh
 ```
+
+
+#### 5.1.1 补充说明
+
+不同的环境在执行了文件替换之后可能会有些差别,在拷贝配置文件之前可能还需要将这些`^M`的符号去掉
+
+![json-demo](./picture/json-demo.png)
+![etcd-demo](./picture/etcd-demo.png)
+
+
 ### 5.2 修改节点配置
 
 ```shell
