@@ -820,5 +820,63 @@ deployment "kube-dns" created
 
 # 看看启动是否成功
 $ kubectl -n kube-system get pods
+
+## 补充:
+## 在工作节点启动服务的时候 需要主节点授权
+## 查看 Pengding 状态的请求
+$ kubectl [-n kube-system] get csr
+## ------------------------------------------------------- Pending
+$ kubectl get csr
+NAME                                                   AGE       REQUESTOR           CONDITION
+node-csr--t62vk_1qJIUkvkLUCB9bcGbvr5pWOjSXdIYhgJjBOs   6m        kubelet-bootstrap   Pending
+node-csr-TzjqyRfeJWA_sRd0VMZF4FzpZzi1Qd9bJ-1M1uXUeDc   21h       kubelet-bootstrap   Pending
+node-csr-cH6KUFlfcTKoxsxU7dqPstf0GGGsO2tASYuITijyrHU   6m        kubelet-bootstrap   Pending
+node-csr-yNazQTLpM1rLZx3ejt2yccsi8ZIgS53KHLibeeRl25Q   21h       kubelet-bootstrap   Pending
+
+## -------------------------------------------------------
+$ kubectl get csr|grep 'Pending' | awk '{print $1}'| xargs kubectl certificate approve
+## -------------------------------------------------------
+$ kubectl get csr|grep 'Pending' | awk '{print $1}'| xargs kubectl certificate approve
+certificatesigningrequest "node-csr--t62vk_1qJIUkvkLUCB9bcGbvr5pWOjSXdIYhgJjBOs" approved
+certificatesigningrequest "node-csr-TzjqyRfeJWA_sRd0VMZF4FzpZzi1Qd9bJ-1M1uXUeDc" approved
+certificatesigningrequest "node-csr-cH6KUFlfcTKoxsxU7dqPstf0GGGsO2tASYuITijyrHU" approved
+certificatesigningrequest "node-csr-yNazQTLpM1rLZx3ejt2yccsi8ZIgS53KHLibeeRl25Q" approved
+
+## -------------------------------------------------------
+$ kubectl get csr
+NAME                                                   AGE       REQUESTOR           CONDITION
+node-csr--t62vk_1qJIUkvkLUCB9bcGbvr5pWOjSXdIYhgJjBOs   6m        kubelet-bootstrap   Approved,Issued
+node-csr-TzjqyRfeJWA_sRd0VMZF4FzpZzi1Qd9bJ-1M1uXUeDc   21h       kubelet-bootstrap   Approved,Issued
+node-csr-cH6KUFlfcTKoxsxU7dqPstf0GGGsO2tASYuITijyrHU   6m        kubelet-bootstrap   Approved,Issued
+node-csr-yNazQTLpM1rLZx3ejt2yccsi8ZIgS53KHLibeeRl25Q   21h       kubelet-bootstrap   Approved,Issued
+## -------------------------------------------------------
+$ kubectl -n kube-system get csr
+NAME                                                   AGE       REQUESTOR           CONDITION
+node-csr--t62vk_1qJIUkvkLUCB9bcGbvr5pWOjSXdIYhgJjBOs   7m        kubelet-bootstrap   Approved,Issued
+node-csr-TzjqyRfeJWA_sRd0VMZF4FzpZzi1Qd9bJ-1M1uXUeDc   21h       kubelet-bootstrap   Approved,Issued
+node-csr-cH6KUFlfcTKoxsxU7dqPstf0GGGsO2tASYuITijyrHU   7m        kubelet-bootstrap   Approved,Issued
+node-csr-yNazQTLpM1rLZx3ejt2yccsi8ZIgS53KHLibeeRl25Q   21h       kubelet-bootstrap   Approved,Issued
+## ------------------------------------------------------- 启动过程 Pending
+$ kubectl -n kube-system get pods -o wide
+NAME                        READY     STATUS    RESTARTS   AGE       IP        NODE
+kube-dns-795f5f6f9c-tgzg6   0/3       Pending   0          2m        <none>    <none>
+## ------------------------------------------------------- 启动过程 Running
+$ kubectl -n kube-system get pods -o wide
+NAME                        READY     STATUS    RESTARTS   AGE       IP              NODE
+kube-dns-795f5f6f9c-tgzg6   3/3       Running   0          4m        172.20.134.64   192.168.0.14
+
+## ------------------------------------------------------- deploy
+$ kubectl -n kube-system get deploy
+NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+kube-dns   1         1         1            1           4m
+
+## ------------------------------------------------------- services
+$ kubectl -n kube-system get services
+NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
+kube-dns   ClusterIP   10.68.0.2    <none>        53/UDP,53/TCP   4m
+
+## 整个集群正常启动
+## 可以采用 simple 版本部署一些服务,然后测试kube-dns 是否是否提供解析服务
+## e.g. curl [-X GET] nginx-service:8080
 ```
 
